@@ -1,13 +1,16 @@
-const mongoose = require("mongoose");
-const { Schema, model } = mongoose;
+const { Schema, model } = require("mongoose");
 
 const noteSchema = new Schema({
   content: String,
   date: Date,
   important: Boolean,
+  user: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
 });
-
-const Note = model("Note", noteSchema);
 
 // modificando la respuesta
 noteSchema.set("toJSON", {
@@ -17,6 +20,8 @@ noteSchema.set("toJSON", {
     delete returnedObject.__v;
   },
 });
+
+const Note = model("Note", noteSchema);
 
 // const note = new Note({
 //   content: "HTML is easy",
