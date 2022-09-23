@@ -1,21 +1,38 @@
 const notesRouter = require("express").Router();
 const Note = require("../models/Note");
+const User = require("../models/User");
 
 notesRouter.get("/", (req, res) => {
-  Note.find({}).then((note) => {
-    res.send(note);
-  });
+  // const notes = await Note.find({}).populate("user");
+  // res.json(notes);
+  // se pone el nombre de la propiedad
+  Note.find({})
+    .populate("user", {
+      notes: 0,
+    })
+    .then((note) => res.json(note));
 });
 
-notesRouter.post("/", (req, res) => {
-  const { content, important } = req.body;
+notesRouter.post("/", async (req, res) => {
+  const { content, important, userId } = req.body;
+
+  const user = await User.findById(userId);
+
   if (content === undefined) return res.status(400).json({ error: "error" });
   const newNote = new Note({
-    content: content,
+    content,
     date: new Date(),
-    important: important,
+    important,
+    user: user._id,
   });
-  newNote.save().then((savedNote) => res.send(savedNote));
+  try {
+    const savedNote = await newNote.save();
+    user.notes = user.notes.concat(savedNote._id);
+    await user.save();
+    res.json(savedNote);
+  } catch (error) {
+    next(error);
+  }
 });
 
 notesRouter.get("/:id", (req, res, next) => {
